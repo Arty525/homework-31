@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <unordered_set>
 
 class IGraph {
 public:
@@ -31,53 +32,57 @@ public:
     }
     
     int VerticesCount() const{
-        std::vector<int> vertices;
-        std::vector<int>* n;
+        std::unordered_set<int> vertices;
         for (int i = 0; i < edges.size(); ++i) {
             auto n = *edges[i];
-            if (!vertices.size()) {
-                vertices.emplace_back(n[0]);
+            if (!vertices.contains(n[0])) {
+                vertices.insert(n[0]);
             }
-            bool uniqueBeg = true;
-            bool uniqueEnd = true;
-            for (int j = 0; j < vertices.size(); ++j) {
-                uniqueBeg = n[0] != vertices[j];
-                uniqueEnd = n[1] != vertices[j];
+            if (!vertices.contains(n[1])) {
+                vertices.insert(n[1]);
             }
-            if (uniqueBeg) vertices.emplace_back(n[0]);
-            if (uniqueEnd) vertices.emplace_back(n[1]);
         }
-        return vertices.size() - 1;
+        return vertices.size();
     }
 
     void view() {
-        for (int i = 0; i < edges.size(); ++i) {
-            auto f = *edges[i];
-            std::cout << f[0] << ";" << f[1] << std::endl;
-        }
         std::cout << "Vertices: " << VerticesCount() << std::endl;
+
+        for (int i = 1; i <= VerticesCount(); ++i) {
+            std::vector<int> v;
+            std::cout << std::endl;
+            std::cout << i;
+            GetNextVertices(i, v);
+        }
     }
 
     void GetNextVertices(int vertex, std::vector<int>& vertices) const {
-        int v;
         for (int i = 0; i < edges.size(); ++i) {
-            if (*edges[i]->begin() == vertex) {
-                v = i;
+            std::vector<int> n;
+            if (*edges[i].get()->begin() == vertex) {
+                if ((i + 1) < edges.size() - 1 && *edges[i + 1].get()->begin() == vertex) {
+                    ++i;
+                }
+                auto v = *edges[i].get();
+                int s = v[1];
+                int f = v[0];
+                vertices.emplace_back(s);
+                std::cout << "->" << s;
+                if (i < edges.size() - 1) {
+                    n = *edges[i + 1].get();
+                    if (n[0] >= v[0] || n[0]>= v[1]) { //Разобраться с условиями
+                       GetNextVertices(s, vertices);
+                    }
+                    else {
+                       GetNextVertices(f, vertices);
+                    }
+                }
                 break;
             }
+            if (i == edges.size() - 1) {
+                std::cout << std::endl;
+            }
         }
-        /*if (v == NULL) {
-            std::cout << "Vertex not found" << std::endl;
-        }*/
-        //for (int i = v; i < edges.size(); ++i) {
-            int f = *edges[v].get()->begin();
-            int s = *edges[v].get()->end();
-            vertices.emplace_back(f);
-            vertices.emplace_back(s);
-            std::cout << f << "->" << s << "->";
-        //}
-            GetNextVertices(s, vertices);
-
     }
 
     //void GetPrevVertices(int vertex, std::vector<int>& vertices) const {
@@ -101,7 +106,7 @@ int main() {
     ListGraph graph(from,to);
     graph.clear();
     do {
-        std::cout << "Enter command (add, list, matrix, stop): ";
+        /*std::cout << "Enter command (add, list, matrix, stop): ";
         std::cin >> command;
         if (command == "add") {
             std::cout << "Enter start point: ";
@@ -112,8 +117,14 @@ int main() {
         }
         if (command == "list") {
             graph.view();
-        }
-        if (command == "matrix") {
+        }*/
+        graph.AddEdge(1, 2);
+        graph.AddEdge(2, 3);
+        graph.AddEdge(3, 5);
+        graph.AddEdge(3, 1);
+        graph.AddEdge(5, 4);
+        graph.view();
+        /*if (command == "matrix") {
 
         }
         if (command == "next") {
@@ -122,7 +133,20 @@ int main() {
             std::cin >> vertex;
             std::vector<int> vertices;
             graph.GetNextVertices(vertex, vertices);
-        }
+            if (vertices.empty()) {
+                std::cout << "Vertex not found" << std::endl;
+            }
+            else {
+                std::cout << vertex << " -> ";
+            }
+            for (int i = 0; !vertices.empty() && i < vertices.size(); ++i) {
+                std::cout << vertices[i];
+                if (i != vertices.size() - 1) {
+                    std::cout << " -> ";
+                }
+            }
+        }*/
+        command = "stop";
     } while (command != "stop");
     
     return 0;
