@@ -167,7 +167,7 @@ int main() {
             list.AddEdge(5, 4);
             list.AddEdge(5, 2);
             list.view();
-            std::wcout << "Get previous vertex" << std::endl;
+            std::cout << "Get previous vertex" << std::endl;
             for (int i = 1; i <= 5; ++i) {
                 std::vector<int> v;
                 std::cout << i;
@@ -186,7 +186,7 @@ int main() {
             std::cout << "Enter vertex: ";
             std::cin >> vertex;
             std::vector<int> vertices;
-            std::wcout << vertex;
+            std::cout << vertex;
             list.GetNextVertices(vertex, vertices);
             if (vertices.empty()) {
                 std::cout << "Vertex not found" << std::endl;
@@ -198,12 +198,12 @@ int main() {
             std::cout << "Enter vertex: ";
             std::cin >> vertex;
             std::vector<int> vertices;
-            std::wcout << vertex;
+            std::cout << vertex;
             list.GetPrevVertices(vertex, vertices);
             if (vertices.empty()) {
                 std::cout << "Vertex not found" << std::endl;
             }
-            std::wcout << std::endl;
+            std::cout << std::endl;
         }
     } while (command != "stop");
     std::cout << std::endl;
