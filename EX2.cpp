@@ -10,7 +10,7 @@ public:
     virtual void AddEdge(int from, int to) = 0; // Метод принимает вершины начала и конца ребра и добавляет ребро
     virtual int VerticesCount() const = 0; // Метод должен считать текущее количество вершин
     virtual void GetNextVertices(int vertex, std::vector<int>& vertices) const = 0; // Для конкретной вершины метод выводит в вектор “вершины” все вершины, в которые можно дойти по ребру из данной
-   // virtual void GetPrevVertices(int vertex, std::vector<int>& vertices) const = 0; // Для конкретной вершины метод выводит в вектор “вершины” все вершины, из которых можно дойти по ребру в данную
+    virtual void GetPrevVertices(int vertex, std::vector<int>& vertices) const = 0; // Для конкретной вершины метод выводит в вектор “вершины” все вершины, из которых можно дойти по ребру в данную
 };
 
 class ListGraph : IGraph { 
@@ -18,7 +18,23 @@ class ListGraph : IGraph {
     std::vector<std::shared_ptr<std::vector<int>>> edges;
     int from;
     int to;
+    ListGraph* obj;
 public:
+    std::vector<std::shared_ptr<std::vector<int>>>* ed = new std::vector<std::shared_ptr<std::vector<int>>>(edges);
+    ListGraph(const ListGraph& oth) {
+        obj = new ListGraph(*oth.obj);
+    }
+    ListGraph& operator = (const ListGraph& oth) {
+        if (this == &oth) {
+            return *this;
+        }
+        if (obj != nullptr) {
+            delete obj;
+        }
+        obj = new ListGraph(*oth.obj);
+        return *this;
+    }
+
     void clear() {
         vert.clear();
         edges.clear();
@@ -50,52 +66,85 @@ public:
 
         for (int i = 1; i <= VerticesCount(); ++i) {
             std::vector<int> v;
-            std::cout << std::endl;
             std::cout << i;
             GetNextVertices(i, v);
+            std::cout << std::endl;
         }
     }
 
     void GetNextVertices(int vertex, std::vector<int>& vertices) const {
-        for (int i = 0; i < edges.size(); ++i) {
-            std::vector<int> n;
-            if (*edges[i].get()->begin() == vertex) {
-                if ((i + 1) < edges.size() - 1 && *edges[i + 1].get()->begin() == vertex) {
-                    ++i;
-                }
-                auto v = *edges[i].get();
-                int s = v[1];
-                int f = v[0];
-                vertices.emplace_back(s);
-                std::cout << "->" << s;
-                if (i < edges.size() - 1) {
-                    n = *edges[i + 1].get();
-                    if (n[0] >= v[0] || n[0]>= v[1]) { //Разобраться с условиями
-                       GetNextVertices(s, vertices);
-                    }
-                    else {
-                       GetNextVertices(f, vertices);
-                    }
-                }
-                break;
+        for (int i = 0; i <= edges.size() - 1; ++i) {
+            std::vector<int> n = *edges[i].get();
+            if (n[0] == vertex) {
+                vertices.emplace_back(n[1]);
             }
-            if (i == edges.size() - 1) {
+        }
+        if (!vertices.empty()) {
+            for (int i = 0; i <= vertices.size() - 1; ++i) {
+                if (i <= vertices.size() - 1) {
+                    std::cout << "->";
+                }
+                std::cout << vertices[i];
+            }
+        }
+
+    }
+
+    void GetPrevVertices(int vertex, std::vector<int>& vertices) const {
+        for (int i = 0; i <= edges.size() - 1; ++i) {
+            std::vector<int> n = *edges[i].get();
+            if (n[1] == vertex) {
+                vertices.emplace_back(n[0]);
+            }
+        }
+        if (!vertices.empty()) {
+            for (int i = 0; i <= vertices.size() - 1; ++i) {
+                if (i <= vertices.size() - 1) {
+                    std::cout << "<-";
+                }
+                std::cout << vertices[i];
+            }
+        }
+    }
+
+    std::vector<std::shared_ptr<std::vector<int>>> get_edges(){
+        return *ed;
+    }
+
+    ListGraph(int inFrom, int inTo) {
+    };
+};
+
+class MatrixGraph : ListGraph {
+    std::vector<std::shared_ptr<std::vector<int>>>* edges = new std::vector<std::shared_ptr<std::vector<int>>> (*ed);
+public:
+    void view() {
+        std::cout << " |";
+        for (int i = 1; i <= edges->size(); ++i) {
+            std::cout << i << " ";
+        }
+        std::cout << std::endl;
+        for (int i = 1; i <= VerticesCount(); ++i) {
+            std::cout << i << "|";
+            for (int j = 0; j <= edges->size() - 1; ++j) {
+                auto e = edges[j];
+                if (e[0].get()->begin() == i) { //ПЕРЕДАТЬ ВЕКТОР РЕБЕР В МАТРИЦУ!
+                    std::cout << "1";
+                }
+                else if (e[1] == i) {
+                    std::cout << "-1";
+                }
+                else {
+                    std::cout << "0";
+                }
                 std::cout << std::endl;
             }
         }
     }
 
-    //void GetPrevVertices(int vertex, std::vector<int>& vertices) const {
 
-    //}
-
-    ListGraph(int inFrom, int inTo) {
-        AddEdge(inFrom, inTo);
+    MatrixGraph(int inFrom, int inTo) : ListGraph(inFrom, inTo) {
     }
-};
-
-class MatrixGraph : IGraph {
-
 };
 
 
@@ -103,8 +152,10 @@ int main() {
     int from = 0;
     int to = 0;
     std::string command;
-    ListGraph graph(from,to);
-    graph.clear();
+    std::shared_ptr <ListGraph> list = std::make_shared<ListGraph>(from, to);
+    std::shared_ptr <MatrixGraph> matrix = std::make_shared<MatrixGraph>(from,to);
+
+    //list.clear();
     do {
         /*std::cout << "Enter command (add, list, matrix, stop): ";
         std::cin >> command;
@@ -118,12 +169,21 @@ int main() {
         if (command == "list") {
             graph.view();
         }*/
-        graph.AddEdge(1, 2);
-        graph.AddEdge(2, 3);
-        graph.AddEdge(3, 5);
-        graph.AddEdge(3, 1);
-        graph.AddEdge(5, 4);
-        graph.view();
+        list.get()->AddEdge(1, 2);
+        list.get()->AddEdge(2, 3);
+        list.get()->AddEdge(3, 5);
+        list.get()->AddEdge(3, 1);
+        list.get()->AddEdge(5, 4);
+        list.get()->AddEdge(5, 2);
+        list.get()->view();
+        for (int i = 1; i <= 5; ++i) {
+            std::vector<int> v;
+            std::cout << i;
+            list.get()->GetPrevVertices(i, v);
+            std::cout << std::endl;
+        }
+        matrix.get()->view();
+
         /*if (command == "matrix") {
 
         }
@@ -148,6 +208,7 @@ int main() {
         }*/
         command = "stop";
     } while (command != "stop");
+    std::cout << std::endl;
     
     return 0;
 }
